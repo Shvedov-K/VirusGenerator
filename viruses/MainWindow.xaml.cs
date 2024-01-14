@@ -1,18 +1,12 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using VirusGenerator;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.InteropServices;
+using Microsoft.Win32;
 
 namespace viruses
 {
@@ -23,17 +17,19 @@ namespace viruses
     {        
         private List<Symptom> symptomsList = new List<Symptom>();
         private List<List<TextBox>> textBoxList = new List<List<TextBox>>();
+        private List<ComboBox> comboBoxList = new List<ComboBox>();
 
         public MainWindow()
         {
             InitializeComponent();
             InitializeViruses();
             InitializeTextBoxList();
-            LoadComboBox(ref ComboBox1);
+            InitializeComboBoxList();
+            LoadComboBox();
             InitializeComboBoxesDropDown();
         }
 
-        public void InitializeTextBoxList()
+        private void InitializeTextBoxList()
         {
             List<TextBox> list = new List<TextBox>();
             list.Add(TextBox11);
@@ -79,6 +75,14 @@ namespace viruses
             textBoxList.Add(new List<TextBox>(list));
         }
 
+        private void InitializeComboBoxList()
+        {
+            comboBoxList.Add(ComboBox1);
+            comboBoxList.Add(ComboBox2);
+            comboBoxList.Add(ComboBox3);
+            comboBoxList.Add(ComboBox4);
+            comboBoxList.Add(ComboBox5);
+        }
         private void InitializeComboBoxesDropDown()
         {
             ComboBox1.DropDownOpened += new EventHandler(ComboBox1_DropDownOpened);
@@ -102,23 +106,28 @@ namespace viruses
 
         private void InitializeViruses()
         {
-            foreach (string line in System.IO.File.ReadLines(Environment.CurrentDirectory + "/viruses.txt"))
+            GetSymptoms();
+            foreach (string line in File.ReadLines(Environment.CurrentDirectory + "/viruses.txt"))
             {
                 symptomsList.Add(new Symptom( line.Split("\t")));                
-            }
+            }            
         }
 
-        private void LoadComboBox(ref ComboBox comboBox)
+        private void LoadComboBox()
         {
-            comboBox.Items.Clear();
-            foreach (Symptom symptom in symptomsList)
+            var listSpan = CollectionsMarshal.AsSpan(comboBoxList);
+            foreach (ref ComboBox comboBox in listSpan)
             {
-                if (!symptom.isActive)
+                comboBox.Items.Clear();
+                foreach (Symptom symptom in symptomsList)
                 {
-                    comboBox.Items.Add(symptom.name);
+                    if (!symptom.isActive)
+                    {
+                        comboBox.Items.Add(symptom.name);
+                    }
                 }
+                comboBox.SelectedIndex = -1;
             }
-            comboBox.SelectedIndex = -1;
         }
 
         private void virusesListActiveUpdate(ref ComboBox comboBox, int index)
@@ -186,7 +195,7 @@ namespace viruses
             if (ComboBox1.SelectedIndex != -1)
             {
                 int count = 1;
-               foreach (TextBox textBox in textBoxList[0])
+                foreach (TextBox textBox in textBoxList[0])
                 {
                     textBox.Text = getParam(1, count++);
                 }
@@ -257,31 +266,34 @@ namespace viruses
             }
             TextBox1.Text = getFinalParam(0).ToString();
             TextBox2.Text = (getFinalParam(1) + 1).ToString();
-            TextBox3.Text = (getFinalParam(2) + 1).ToString();
+            double speed = getFinalParam(2) + 1;
+            if (speed < 1.3 * Math.Sqrt(speed + 11))
+            {
+                speed = 1.3 * Math.Sqrt(speed + 11);
+            }
+            TextBox3.Text = speed.ToString();
             TextBox4.Text = (getFinalParam(3) + 1).ToString();
 
-            int count1 = 0;
+            double count1 = 0;
             foreach (Symptom symptom in symptomsList)
             {
                 if (symptom.isActive) count1++;
             }
 
             
-            switch (int.Parse(TextBox4.Text))
+            switch (int.Parse(TextBox4.Text) - count1)
             {
-                case 2: VirusTransmission.Text = "Контакт ногами";
+                case 2: VirusTransmission.Text = "Контакт";
                     break;
-                case 3: VirusTransmission.Text = "Контакт руками";
-                    break;
-                case 4: VirusTransmission.Text = "Прикосновением в целом";
+                case 3: VirusTransmission.Text = "Контакт";
                     break;
                 default:
-                    if (int.Parse(TextBox4.Text) <= 1) VirusTransmission.Text = "Кровь";
+                    if (int.Parse(TextBox4.Text) - count1  <= 1) VirusTransmission.Text = "Кровь";
                     else VirusTransmission.Text = "По воздуху";
                     break;
             }
 
-            int Res = int.Parse(TextBox2.Text) - count1 / 2;
+            int Res = (int)( int.Parse(TextBox2.Text) * 1.0 - count1 / 2);
             switch (Res)
             {
                 case 2: 
@@ -317,9 +329,10 @@ namespace viruses
                     break;
             }
 
-            if (int.Parse(TextBox1.Text) >= 3) TextBoxStealth.Text = "Ничто";
+            if (int.Parse(TextBox1.Text) <= 1) TextBoxStealth.Text = "Анализатор";
             else if (int.Parse(TextBox1.Text) == 2) TextBoxStealth.Text = "Пандемик";
-            else TextBoxStealth.Text = "Анализатор";
+            else TextBoxStealth.Text = "Ничто";
+
         }
 
         private int getFinalParam(int index)
@@ -351,7 +364,6 @@ namespace viruses
         {
             
             virusesListActiveUpdate(ref ComboBox1, 1);
-            LoadComboBox(ref ComboBox1);            
         }
 
         void ComboBox1_DropDownClosed(object sender, EventArgs e)
@@ -361,7 +373,6 @@ namespace viruses
 
         void ComboBox2_DropDownOpened(object sender, EventArgs e)
         {
-            LoadComboBox(ref ComboBox2);
             virusesListActiveUpdate(ref ComboBox2, 2);
         }
 
@@ -374,7 +385,6 @@ namespace viruses
         {
             
             virusesListActiveUpdate(ref ComboBox3, 3);
-            LoadComboBox(ref ComboBox3);
         }
 
         void ComboBox3_DropDownClosed(object sender, EventArgs e)
@@ -386,7 +396,6 @@ namespace viruses
         {
             
             virusesListActiveUpdate(ref ComboBox4, 4);
-            LoadComboBox(ref ComboBox4);
         }
 
         void ComboBox4_DropDownClosed(object sender, EventArgs e)
@@ -398,7 +407,6 @@ namespace viruses
         {
             
             virusesListActiveUpdate(ref ComboBox5, 5);
-            LoadComboBox(ref ComboBox5);
         }
 
         void ComboBox5_DropDownClosed(object sender, EventArgs e)
@@ -410,7 +418,6 @@ namespace viruses
         {
             
             virusesListActiveUpdate(ref ComboBox6, 6);
-            LoadComboBox(ref ComboBox6);
         }
 
         void ComboBox6_DropDownClosed(object sender, EventArgs e)
@@ -458,7 +465,7 @@ namespace viruses
         private void Button_Click(object sender, RoutedEventArgs e)
         {
             string outStr = "";
-            outStr += VirusTarget.Text;
+            outStr += VirusTarget.Text +"\n";
             int i = 1;
             foreach (Symptom symptom in symptomsList)
             {
@@ -482,7 +489,7 @@ namespace viruses
                     "[center][i][large][b]Вирус: " + VirusName.Text + " [field][/b][/large][/i][/center]\n" +
                     "[i][br]Полное название вируса: " + VirusName.Text + " [field]\n" +
                     "[br]Задачи вируса: " + VirusTarget.Text + " [field]\n" +
-                    "[br]Передача вируса: " + VirusResistance.Text + " [field]\n" +
+                    "[br]Передача вируса: " + VirusTransmission.Text + " [field]\n" +
                     "[br]Побочные эффекты:\n";
             string buff = "";
             int i = 1;
@@ -496,7 +503,7 @@ namespace viruses
             }
             outStr += buff + "[field]\n";
             outStr += "Дополнительная информация: [field]\n" +
-                    "Лечение вируса: " + VirusTransmission.Text + "[field][/i]\n\n" +
+                    "Лечение вируса: " + VirusResistance.Text + "[field][/i]\n\n" +
                     "[hr]\n" +
                     "[center][i][large][b]Подписи и штампы[/b][/large][/i][/center]\n" +
                     "[i]Подпись вирусолога: [sign][field][/i]\n\n" +
@@ -520,13 +527,13 @@ namespace viruses
                     "[br]Я, [field], в должности – вирусолога, запрашиваю право на распространение вируса среди экипажа станции.\n" +
                     "[br]Название вируса: " + VirusName.Text + " [field]" + 
                     "[br][br]Задачи вируса: " + VirusTarget.Text + " [field]" + 
-                    "[br][br]Лечение: " + VirusTransmission.Text + "[field]\n" +
+                    "[br][br]Лечение: " + VirusResistance.Text + "[field]\n" +
                     "[grid][br][cell]Вакцина была произведена [br]и в данный момент находится: [cell]На стойке мед. отдела[field][/grid]\n\n" +
                     "[hr]\n" +
                     "[center][i][large][b]Подписи и штампы[/b][/large][/i][/center]\n" +
                     "[i]Подпись вирусолога: [sign][field][/i]\n" +
                     "[i]Подпись Глав. Врача: [field][/i]\n" +
-                    "[i]Подпись Глав. Врача: [field][/i]\n\n" +
+                    "[i]Подпись Капитана: [field][/i]\n\n" +
                     "[hr]\n" +
                     "[small]*Производитель вируса несет полную ответственность за его распространение, изолирование и лечение *При возникновении опасных или смертельных побочных эффектов у членов экипажа, производитель должен незамедлительно предоставить вакцину, от данного вируса.[/small]\n\n" +
                     "[hr]\n" +
@@ -540,6 +547,71 @@ namespace viruses
         private void SortBySpeed_Click(object sender, RoutedEventArgs e)
         {
             symptomsList.Sort((x, y) => x.speed.CompareTo(y.speed));
+        }
+
+        private void GetSymptoms()
+        {
+            var request = new GetRequest("https://wiki.ss220.space/index.php/%D0%A0%D1%83%D0%BA%D0%BE%D0%B2%D0%BE%D0%B4%D1%81%D1%82%D0%B2%D0%BE_%D0%BF%D0%BE_%D0%B2%D0%B8%D1%80%D1%83%D1%81%D0%BE%D0%BB%D0%BE%D0%B3%D0%B8%D0%B8#Sensory_Restoration");
+            request.Run();
+        }
+
+        private void saveButton_Click(object sender, RoutedEventArgs e)
+        {
+            Stream fs;
+            BinaryFormatter formatter = new BinaryFormatter();
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+
+            saveFileDialog.Filter = "dat files (*.dat)|*.dat";
+            saveFileDialog.DefaultExt = ".dat";
+            saveFileDialog.InitialDirectory = Environment.CurrentDirectory + "\\completeViruses";
+            saveFileDialog.FilterIndex = 2;
+            saveFileDialog.RestoreDirectory = true;
+
+            if ((bool)saveFileDialog.ShowDialog())
+            {
+                if ((fs = saveFileDialog.OpenFile()) != null)
+                {
+                    formatter.Serialize(fs, symptomsList);
+                    fs.Close();
+                }
+            }
+        }
+
+        private void loadButton_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new OpenFileDialog();
+
+            openFileDialog.FileName = "Document";
+            openFileDialog.DefaultExt = ".dat";
+            openFileDialog.Filter = "Dat Files (.dat)|*.dat";
+            openFileDialog.InitialDirectory = Environment.CurrentDirectory + "\\completeViruses";
+
+#pragma warning disable CS8629 // Тип значения, допускающего NULL, может быть NULL.
+            if ((bool)openFileDialog.ShowDialog())
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                FileStream stream = openFileDialog.OpenFile() as FileStream;
+                symptomsList = (List<Symptom>)formatter.Deserialize(stream);
+                updateComboBoxes();
+                textBoxesUpdate();
+                string filename = openFileDialog.FileName;
+            }
+#pragma warning restore CS8629 // Тип значения, допускающего NULL, может быть NULL.
+
+        }
+
+        private void updateComboBoxes()
+        {
+            int comboBoxNumber = 0;
+            foreach (Symptom symptom in symptomsList)
+            {
+                if (symptom.isActive)
+                {
+                    ComboBox comboBox = comboBoxList[comboBoxNumber];
+                    comboBox.SelectedItem = symptom.name;
+                    comboBoxNumber++;
+                }
+            }
         }
     }
 }

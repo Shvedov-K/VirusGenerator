@@ -7,6 +7,9 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="917">
     <Grid Margin="0,0,10,0">
+        <Grid.Background>
+            <ImageBrush/>
+        </Grid.Background>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="281*"/>
             <ColumnDefinition Width="622*"/>
@@ -70,8 +73,10 @@
         <TextBox x:Name="FFT" HorizontalAlignment="Left" Height="178" Margin="10,221,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="294" Grid.ColumnSpan="2"/>
         <TextBox x:Name="VirusName" Grid.Column="1" HorizontalAlignment="Left" Margin="45,248,0,0" TextWrapping="Wrap" Text="Messa" VerticalAlignment="Top" Width="120"/>
         <TextBox x:Name="VirusTarget" Grid.Column="1" HorizontalAlignment="Left" Margin="173,248,0,0" TextWrapping="Wrap" Text="Данный вирус нацелен на повышение выживаемости экипажа при ЧС. " VerticalAlignment="Top" Width="430" Height="38"/>
-        <TextBox x:Name="VirusResistance" Grid.Column="1" HorizontalAlignment="Left" Margin="45,271,0,0" TextWrapping="Wrap" Text="Blood" VerticalAlignment="Top" Width="120"/>
-        <TextBox x:Name="VirusTransmission" Grid.Column="1" HorizontalAlignment="Left" Margin="45,294,0,0" TextWrapping="Wrap" Text="Salt" VerticalAlignment="Top" Width="120"/>
+        <TextBox x:Name="VirusResistance" Grid.Column="1" HorizontalAlignment="Left" Margin="45,271,0,0" TextWrapping="Wrap" Text="Salt" VerticalAlignment="Top" Width="120"/>
+        <TextBox x:Name="VirusTransmission" Grid.Column="1" HorizontalAlignment="Left" Margin="45,294,0,0" TextWrapping="Wrap" Text="Blood" VerticalAlignment="Top" Width="120"/>
         <Button x:Name="SortBySpeed" Content="Sp" HorizontalAlignment="Left" Margin="182,21,0,0" VerticalAlignment="Top" Click="SortBySpeed_Click"/>
+        <Button x:Name="saveButton" Grid.Column="1" Content="Save" HorizontalAlignment="Left" Margin="256,360,0,0" VerticalAlignment="Top" Click="saveButton_Click"/>
+        <Button x:Name="loadButton" Grid.Column="1" Content="Load" HorizontalAlignment="Left" Margin="332,370,0,0" VerticalAlignment="Top" Click="loadButton_Click"/>
     </Grid>
 </Window>
